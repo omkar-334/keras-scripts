@@ -1,12 +1,8 @@
 import numpy as np
 
 
-def convert_weights(backbone, loader, transformers_config=None):
-    pass
-
-
 class DummyLoader:
-    def __init__(self, keras_model, hf_model, remove_model_prefix=True):
+    def __init__(self, keras_model, hf_model, convert_weights_fn, remove_model_prefix=True):
         self.keras_model = keras_model
         self.hf_model = hf_model
         self.hf_model_weights = hf_model.state_dict()
@@ -14,6 +10,7 @@ class DummyLoader:
         self.num_layers = 0
         self.model_type = hf_model.config.model_type
         self.remove_model_prefix = remove_model_prefix
+        self.convert_weights_fn = convert_weights_fn
 
     def port_weight(self, keras_variable, hf_weight_key, hook_fn=None):
         if self.remove_model_prefix:
@@ -61,7 +58,7 @@ class DummyLoader:
         backbone = loader.keras_model
         print("\n=== Weight Comparison Report ===")
 
-        convert_weights(backbone, loader)
+        loader.convert_weights_fn(backbone, loader, transformers_config=None)
 
         print("\n=== Summary ===")
         if loader.mismatched_layers:
@@ -73,3 +70,17 @@ class DummyLoader:
         if loader.mismatched_layers:
             for layer in loader.mismatched_layers:
                 print(f"  - {layer}")
+
+
+if __name__ == "__main__":
+    import keras_hub
+    from keras_hub.src.utils.transformers.convert_roberta import convert_weights
+    from transformers import BertModel, RobertaModel
+
+    hf_model = RobertaModel.from_pretrained("roberta-base")
+    keras_model = keras_hub.models.RobertaBackbone.from_preset("hf://FacebookAI/roberta-base", dtype="bfloat16")
+
+    loader = DummyLoader(keras_model, hf_model, convert_weights)
+
+    loader.check_all_weights()
+    # loader.print_mismatched_layers()
