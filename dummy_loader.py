@@ -31,10 +31,8 @@ class DummyLoader:
             hf_w = hook_fn(hf_w, list(keras_w.shape))
 
         if keras_w.shape != hf_w.shape:
-            keras_w = keras_w.transpose(1, 2, 0).reshape(768, 768)
-            if keras_w.shape != hf_w.shape:
-                print(f"❌ Shape mismatch: Keras {keras_w.shape} vs HF {hf_w.shape}")
-                return False
+            print(f"❌ Shape mismatch: Keras {keras_w.shape} vs HF {hf_w.shape}")
+            return False
 
         if not isinstance(keras_w, np.ndarray):
             keras_w = keras_w.numpy()
