@@ -1,5 +1,7 @@
 import numpy as np
 
+# https://colab.research.google.com/drive/1n1CDGJMQIg1yG8w8H5wryUH89sYZk8O2#scrollTo=dG8Q_A8TeMmh
+
 
 class DummyLoader:
     def __init__(self, keras_model, hf_model, convert_weights_fn, remove_model_prefix=True):
@@ -11,6 +13,10 @@ class DummyLoader:
         self.model_type = hf_model.config.model_type
         self.remove_model_prefix = remove_model_prefix
         self.convert_weights_fn = convert_weights_fn
+
+        self.keras_variables = []
+        self.hf_variables = []
+        self.hf_weight_names = []
 
     def port_weight(self, keras_variable, hf_weight_key, hook_fn=None):
         if self.remove_model_prefix:
@@ -29,6 +35,10 @@ class DummyLoader:
         hf_w = self.hf_model_weights[hf_weight_key]
         if hook_fn:
             hf_w = hook_fn(hf_w, list(keras_w.shape))
+
+        self.keras_variables.append(keras_w)
+        self.hf_variables.append(hf_w)
+        self.hf_weight_names.append(hf_weight_key)
 
         if keras_w.shape != hf_w.shape:
             print(f"❌ Shape mismatch: Keras {keras_w.shape} vs HF {hf_w.shape}")
